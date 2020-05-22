@@ -95,9 +95,11 @@ switch ($PSCmdlet.ParameterSetName)
     $sessionParams = @{ }
     if ($PSBoundParameters.ContainsKey('Credential'))
     { $sessionParams.Credential = $Credential }
+    $ProductionSession = New-PSSession -ComputerName $ProductionServer -Name 'ProductionAADConnectSession' @sessionParams
+    $StagingSession = New-PSSession -ComputerName $StagingServer -Name 'StagingAADConnectSession' @sessionParams
     $Sessions = @(
-      $ProductionSession = New-PSSession -ComputerName $ProductionServer -Name 'ProductionAADConnectSession' @sessionParams
-      $StagingSession = New-PSSession -ComputerName $StagingServer -Name 'StagingAADConnectSession' @sessionParams
+      $ProductionSession
+      $StagingSession
     )
     $timeStamp = Get-Date -Format yyyyMMddmmss
     Invoke-Command -Session $Sessions -ScriptBlock { Import-Module ADSync }
