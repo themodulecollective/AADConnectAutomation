@@ -6,6 +6,9 @@ param(
   [parameter(ParameterSetName = 'LatestConfig', Mandatory)]
   [string]$StagingServer
   ,
+  [parameter(ParameterSetName = 'LatestConfig')]
+  [pscredential]$Credential
+  ,
   [parameter(Mandatory)]
   [string]$TenantName #this can be an arbitrary value, it's just used to describe the organization configuration being documented. Use 'Contoso' and the -KeepSampleData paramter to test with the AADConnectSyncDocumenter Sample Data.
   ,
@@ -89,9 +92,12 @@ switch ($PSCmdlet.ParameterSetName)
     {
       New-Item -Path $ConfigDestination -ItemType Directory
     }
+    $sessionParams = @{ }
+    if ($PSBoundParameters.ContainsKey('Credential'))
+    { $sessionParams.Credential = $Credential }
     $Sessions = @(
-      $ProductionSession = Connect-PSSession -ComputerName $ProductionServer -Name 'ProductionAADConnectSession'
-      $StagingSession = Connect-PSSession -ComputerName $StagingServer -Name 'StagingAADConnectSession'
+      $ProductionSession = New-PSSession -ComputerName $ProductionServer -Name 'ProductionAADConnectSession' @sessionParams
+      $StagingSession = New-PSSession -ComputerName $StagingServer -Name 'StagingAADConnectSession' @sessionParams
     )
     $timeStamp = Get-Date -Format yyyyMMddmmss
     Invoke-Command -Session $Sessions -ScriptBlock { Import-Module ADSync }
