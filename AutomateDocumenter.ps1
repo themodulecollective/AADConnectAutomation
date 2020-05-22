@@ -107,11 +107,12 @@ switch ($PSCmdlet.ParameterSetName)
 
     Invoke-Command -Session $Sessions -ScriptBlock { Import-Module ADSync }
 
+    #these commands are not using the $sessions array when they could because a user might run this with just one aadsync server as both staging and production
     Invoke-Command -Session $StagingSession -ScriptBlock { $configFolder = $(Join-Path -Path $([system.environment]::GetEnvironmentVariable('temp')) -ChildPath $using:StagingConfigFolderName) }
     Invoke-Command -Session $ProductionSession -ScriptBlock { $configFolder = $(Join-Path -Path $([system.environment]::GetEnvironmentVariable('temp')) -ChildPath $using:ProductionConfigFolderName) }
     Invoke-Command -Session $Sessions -ScriptBlock { New-Item -Path $configFolder -ItemType Directory }
-    Invoke-Command -Session $Sessions -ScriptBlock { Get-ADSyncServerConfiguration -Path $configFolder }
-
+    Invoke-Command -Session $StagingSession -ScriptBlock { Get-ADSyncServerConfiguration -Path $configFolder }
+    Invoke-Command -Session $ProductionSession -ScriptBlock { Get-ADSyncServerConfiguration -Path $configFolder }
     #Get the config files from Production
     $productionConfigPath = Invoke-Command -Session $ProductionSession -ScriptBlock { $configFolder }
     Copy-Item -FromSession $ProductionSession -Path $productionConfigPath -Destination $productionDestination -Recurse
