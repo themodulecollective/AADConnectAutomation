@@ -102,10 +102,16 @@ switch ($PSCmdlet.ParameterSetName)
       $StagingSession
     )
     $timeStamp = Get-Date -Format yyyyMMddmmss
+    $StagingConfigFolderName = 'Staging' + $timeStamp
+    $ProductionConfigFolderName = 'Production' + $timeStamp
+
     Invoke-Command -Session $Sessions -ScriptBlock { Import-Module ADSync }
-    Invoke-Command -Session $Sessions -ScriptBlock { $configFolder = $(Join-Path -Path $([system.environment]::GetEnvironmentVariable('temp')) -ChildPath $using:TimeStamp) }
+
+    Invoke-Command -Session $StagingSession -ScriptBlock { $configFolder = $(Join-Path -Path $([system.environment]::GetEnvironmentVariable('temp')) -ChildPath $using:StagingConfigFolderName) }
+    Invoke-Command -Session $ProductionSession -ScriptBlock { $configFolder = $(Join-Path -Path $([system.environment]::GetEnvironmentVariable('temp')) -ChildPath $using:ProductionConfigFolderName) }
     Invoke-Command -Session $Sessions -ScriptBlock { New-Item -Path $configFolder -ItemType Directory }
     Invoke-Command -Session $Sessions -ScriptBlock { Get-ADSyncServerConfiguration -Path $configFolder }
+
     #Get the config files from Production
     $productionConfigPath = Invoke-Command -Session $ProductionSession -ScriptBlock { $configFolder }
     Copy-Item -FromSession $ProductionSession -Path $productionConfigPath -Destination $productionDestination -Recurse
